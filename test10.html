@@ -1,0 +1,308 @@
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>都道府県 絞り込み2択クイズ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        #questionBox {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        #stepTitle {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .filter-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            transition: 0.2s;
+        }
+        #btnLeft {
+            background-color: #007bff; /* 左にある：青 */
+        }
+        #btnLeft:hover {
+            background-color: #0056b3;
+        }
+        #btnRight {
+            background-color: #28a745; /* 右にある：緑 */
+        }
+        #btnRight:hover {
+            background-color: #218838;
+        }
+        #resetBtn {
+            background-color: #6c757d;
+            margin-top: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        #resetBtn:hover {
+            background-color: #5a6268;
+        }
+
+        /* 左右2列を並べるコンテナ */
+        .container {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        /* 各列のボックス */
+        .column {
+            flex: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .column h3 {
+            font-size: 15px;
+            margin-top: 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+            color: #444;
+        }
+        ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+        li {
+            padding: 4px 0;
+            border-bottom: 1px solid #f9f9f9;
+            font-size: 14px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>都道府県 絞り込み2択クイズ</h2>
+    
+    <!-- 質問とボタンエリア -->
+    <div id="questionBox">
+        <div id="stepTitle">読み込み中...</div>
+        <div id="buttonContainer">
+            <!-- ボタンを「左にある」「右にある」に変更 -->
+            <button id="btnLeft" class="filter-btn">左にある</button>
+            <button id="btnRight" class="filter-btn">右にある</button>
+        </div>
+    </div>
+
+    <!-- 左右2列のリスト表示エリア -->
+    <div class="container">
+        <!-- 左列 -->
+        <div class="column">
+            <h3 id="leftTitle">左側のリスト</h3>
+            <div id="leftCount" style="font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #666;"></div>
+            <ul id="leftList"></ul>
+        </div>
+
+        <!-- 右列 -->
+        <div class="column">
+            <h3 id="rightTitle">右側のリスト</h3>
+            <div id="rightCount" style="font-weight: bold; font-size: 12px; margin-bottom: 8px; color: #666;"></div>
+            <ul id="rightList"></ul>
+        </div>
+    </div>
+
+    <button id="resetBtn" class="filter-btn">最初からやり直す</button>
+
+    <script>
+        // 全都道府県データ
+        const allPrefectures = [
+            { name: "東京都", code: "AAA" },
+            { name: "神奈川県", code: "BAAA" },
+            { name: "大阪府", code: "BBBB" },
+            { name: "愛知県", code: "BBAB" },
+            { name: "埼玉県", code: "AABB" },
+            { name: "千葉県", code: "ABBA" },
+            { name: "兵庫県", code: "BABBB" },
+            { name: "福岡県", code: "BABBA" },
+            { name: "北海道", code: "BABAA" },
+            { name: "静岡県", code: "AABAA" },
+            { name: "茨城県", code: "ABABA" },
+            { name: "広島県", code: "ABAAA" },
+            { name: "京都府", code: "BABABA" },
+            { name: "宮城県", code: "BAABAB" },
+            { name: "新潟県", code: "BBBABA" },
+            { name: "長野県", code: "BBBAAA" },
+            { name: "岐阜県", code: "BBAABB" },
+            { name: "群馬県", code: "BBAABA" },
+            { name: "栃木県", code: "BBAAAB" },
+            { name: "岡山県", code: "BBAAAA" },
+            { name: "福島県", code: "AABABA" },
+            { name: "三重県", code: "ABBBBB" },
+            { name: "熊本県", code: "ABBBBA" },
+            { name: "鹿児島県", code: "ABBBAA" },
+            { name: "沖縄県", code: "ABABBA" },
+            { name: "滋賀県", code: "ABAABB" },
+            { name: "奈良県", code: "BABABBB" },
+            { name: "山口県", code: "BABABBA" },
+            { name: "愛媛県", code: "BAABBBBB" },
+            { name: "長崎県", code: "BAABBBBA" },
+            { name: "青森県", code: "BAABBAA" },
+            { name: "岩手県", code: "BAABAAB" },
+            { name: "石川県", code: "BAABAAA" },
+            { name: "大分県", code: "BBBABBB" },
+            { name: "宮崎県", code: "BBBABBA" },
+            { name: "山形県", code: "BBBAABB" },
+            { name: "富山県", code: "BBBAABA" },
+            { name: "香川県", code: "AABABBB" },
+            { name: "秋田県", code: "AABABBA" },
+            { name: "和歌山県", code: "ABBBABB" },
+            { name: "佐賀県", code: "ABBBABA" },
+            { name: "山梨県", code: "ABABBBB" },
+            { name: "福井県", code: "ABABBBA" },
+            { name: "徳島県", code: "ABAABAB" },
+            { name: "高知県", code: "ABAABAA" },
+            { name: "島根県", code: "BAABBABB" },
+            { name: "鳥取県", code: "BAABBABA" }
+        ];
+
+        let currentPool = [...allPrefectures];
+        let currentIndex = 0; // 0: 1文字目, 1: 2文字目...
+        let questionCount = 0;
+
+        const stepTitle = document.getElementById("stepTitle");
+        const buttonContainer = document.getElementById("buttonContainer");
+        const btnLeft = document.getElementById("btnLeft");
+        const btnRight = document.getElementById("btnRight");
+        const resetBtn = document.getElementById("resetBtn");
+
+        const leftTitle = document.getElementById("leftTitle");
+        const leftCount = document.getElementById("leftCount");
+        const leftListEl = document.getElementById("leftList");
+
+        const rightTitle = document.getElementById("rightTitle");
+        const rightCount = document.getElementById("rightCount");
+        const rightListEl = document.getElementById("rightList");
+
+        // 左側のリスト（n文字目が "A" の都道府県リスト）
+        function getLeftDisplayList() {
+            return currentPool.filter(item => {
+                if (item.code.length <= currentIndex) return false;
+                return item.code.charAt(currentIndex) === "A";
+            });
+        }
+
+        // 右側のリスト（n文字目が "B" の都道府県リスト）
+        function getRightDisplayList() {
+            return currentPool.filter(item => {
+                if (item.code.length <= currentIndex) return false;
+                return item.code.charAt(currentIndex) === "B";
+            });
+        }
+
+        function updateScreen() {
+            const nth = currentIndex + 1;
+            leftTitle.textContent = `左リスト（${nth}文字目が「A」）`;
+            rightTitle.textContent = `右リスト（${nth}文字目が「B」）`;
+
+            const leftData = getLeftDisplayList();
+            const rightData = getRightDisplayList();
+
+            // 左側の描画
+            leftCount.textContent = `該当 ${leftData.length} 件`;
+            let leftHtml = "";
+            leftData.forEach(item => {
+                leftHtml += `<li>${item.name} : ${item.code}</li>`;
+            });
+            leftListEl.innerHTML = leftHtml;
+
+            // 右側の描画
+            rightCount.textContent = `該当 ${rightData.length} 件`;
+            let rightHtml = "";
+            rightData.forEach(item => {
+                rightHtml += `<li>${item.name} : ${item.code}</li>`;
+            });
+            rightListEl.innerHTML = rightHtml;
+
+            // 1つに絞り込めた場合
+            if (currentPool.length === 1) {
+                const target = currentPool[0];
+                stepTitle.textContent = `🎉 全 ${questionCount} 手であなたの都道府県を「${target.name}」に特定しました！`;
+                leftListEl.innerHTML =  `<li>-</li>`;
+                rightListEl.innerHTML = `<li>-</li>`;
+                buttonContainer.style.display = "none";
+                return;
+            }
+
+            if (currentPool.length === 0) {
+                stepTitle.textContent = `❌ 該当する都道府県がなくなりました。（${questionCount} 手）`;
+                buttonContainer.style.display = "none";
+                return;
+            }
+
+            // ご要望の質問文に変更
+            stepTitle.textContent = `Q${questionCount + 1}. あなたの都道府県は左右どちらのリストにありますか？\n（※現在 ${nth} 文字目を判定中）`;
+            buttonContainer.style.display = "block";
+        }
+
+        function handleChoice(chosenSide) {
+            questionCount++;
+
+            if (chosenSide === "left") {
+                // 「左にある」を選んだ場合：左側のリスト（n文字目がA）に含まれていたものに絞る
+                currentPool = currentPool.filter(item => {
+                    if (item.code.length <= currentIndex) return false;
+                    return item.code.charAt(currentIndex) === "A";
+                });
+            } else if (chosenSide === "right") {
+                // 「右にある」を選んだ場合：右側のリスト（n文字目がB）に含まれていたものに絞る
+                currentPool = currentPool.filter(item => {
+                    if (item.code.length <= currentIndex) return false;
+                    return item.code.charAt(currentIndex) === "B";
+                });
+            }
+
+            currentIndex++;
+            updateScreen();
+        }
+
+        // ボタンイベントの設定
+        btnLeft.addEventListener("click", () => handleChoice("left"));     // 「左にある」
+        btnRight.addEventListener("click", () => handleChoice("right"));   // 「右にある」
+
+        resetBtn.addEventListener("click", () => {
+            currentPool = [...allPrefectures];
+            currentIndex = 0;
+            questionCount = 0;
+            buttonContainer.style.display = "block";
+            updateScreen();
+        });
+
+        // 初期実行
+        updateScreen();
+    </script>
+
+</body>
+</html>
